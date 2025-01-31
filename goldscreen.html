@@ -16,6 +16,15 @@
                 e.preventDefault();
             }
         });
+
+        function disableShortcuts(event) {
+            const allowedKeys = ['c', 'v'];
+            // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
+            if (event.ctrlKey && !allowedKeys.includes(event.key.toLowerCase()) || event.key === 'F12') {
+                event.preventDefault();
+            }
+            return true;
+        }
     </script>
     <style>
         body {
@@ -161,6 +170,21 @@
             const selectedLabel = document.getElementById('url-select').value;
             const url = urls[selectedLabel];
             document.getElementById('web-viewer').src = url;
+
+            // Apply event listeners to the iframe content
+            const iframe = document.getElementById('web-viewer');
+            iframe.onload = function() {
+                iframe.contentWindow.document.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                });
+
+                iframe.contentWindow.document.addEventListener('keydown', function(e) {
+                    const allowedKeys = ['c', 'v'];
+                    if (e.ctrlKey && !allowedKeys.includes(e.key.toLowerCase()) || e.key === 'F12') {
+                        e.preventDefault();
+                    }
+                });
+            };
         }
 
         async function runCode() {
@@ -257,17 +281,5 @@ show_plot()
         <img id="plot-image" src="" alt="Plot">
         <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
-    <script>
-        function disableShortcuts(event) {
-            const allowedKeys = ['c', 'v'];
-            // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
-            if (event.ctrlKey && !allowedKeys.includes(event.key.toLowerCase()) || event.key === 'F12') {
-                event.preventDefault();
-            }
-            return true;
-        }
-
-        document.addEventListener('keydown', disableShortcuts);
-    </script>
 </body>
 </html>
