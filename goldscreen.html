@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Viewer and Pyodide Editor</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .column {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+        }
+        .left-column {
+            border-right: 1px solid #ccc;
+        }
+        .right-column {
+            display: flex;
+            flex-direction: column;
+        }
+        #url-select {
+            width: calc(100% - 100px);
+            padding: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #load-button {
+            width: 80px;
+            padding: 12px;
+            margin-left: 10px;
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        iframe {
+            width: 100%;
+            height: calc(100vh - 50px);
+            border: none;
+        }
+        .editor-area, .output-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+            overflow: auto;
+            resize: vertical;
+        }
+        #editor {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow: auto;
+            font-size: 16px; /* Increased font size */
+        }
+        .buttons {
+            margin: 10px 0;
+        }
+        .button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #output {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            white-space: pre-wrap;
+            overflow: auto;
+            font-size: 16px; /* Increased font size */
+        }
+        #plot-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #ccc;
+            background: white;
+            z-index: 1000;
+            padding: 20px;
+        }
+        #plot-popup img {
+            max-width: 100%;
+        }
+        #close-popup {
+            display: block;
+            margin: 10px auto 0;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.4/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.4/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.4/mode/python/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+    <script>
+        let pyodideReadyPromise;
+        let editor;
+
+        const urls = {
+            "Python-Manual": "https://docs.python.org/3/tutorial/introduction.html#numbers",
+            "Numpy-Quick-Start": "https://numpy.org/devdocs/user/quickstart.html",
+            "Moore's Law": "https://numpy.org/numpy-tutorials/content/mooreslaw-tutorial.html"
+        };
+
+        async function loadPyodideAndPackages() {
+            self.pyodide = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/"
+            });
+            await pyodide.loadPackage(['numpy', 'pandas', 'matplotlib', 'scipy']);
+            return pyodide;
+        }
+
+        pyodideReadyPromise = loadPyodideAndPackages();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize CodeMirror editor
+            editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                mode: 'python',
+                lineNumbers: true,
+                theme: 'default',
+                fontSize: '16px' // Set font size for CodeMirror
+            });
+
+            // Set the font size for the CodeMirror editor
+            editor.getWrapperElement().style.fontSize = '16px';
+
+            document.getElementById('load-button').addEventListener('click', loadUrl);
+        });
+
+        function loadUrl() {
+            const selectedLabel = document.getElementById('url-select').value;
+            const url = urls[selectedLabel];
+            document.getElementById('web-viewer').src = url;
+        }
+
+        async function runCode() {
+            const editorContent = editor.getValue();
+
+            // Check if plt.show() is present in the code
+            const shouldShowPlot = editorContent.includes('plt.show()');
+
+            try {
+                const pyodide = await pyodideReadyPromise;
+
+                // Redirect print output to the output div
+                pyodide.runPython(`
+import io, sys
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+                `);
+                const result = await pyodide.runPythonAsync(editorContent);
+                const output = pyodide.runPython('sys.stdout.getvalue()');
+                document.getElementById('output').textContent = output + (result ? result : '');
+
+                // Reset stdout and stderr
+                pyodide.runPython('sys.stdout = sys.__stdout__');
+                pyodide.runPython('sys.stderr = sys.__stderr__');
+
+                // Check if matplotlib was used to generate a plot and plt.show() was called
+                if (shouldShowPlot) {
+                    const plotImg = pyodide.runPython(`
+import matplotlib.pyplot as plt
+import io
+import base64
+
+def show_plot():
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    img_str = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+    plt.clf()
+    return img_str if plt.get_fignums() else ""
+
+show_plot()
+                    `);
+                    if (plotImg) {
+                        showPlotPopup('data:image/png;base64,' + plotImg);
+                    }
+                }
+            } catch (error) {
+                document.getElementById('output').textContent = error;
+            }
+        }
+
+        function clearEditor() {
+            editor.setValue('');
+            document.getElementById('output').textContent = '';
+        }
+
+        function showPlotPopup(imageSrc) {
+            if (imageSrc) {
+                document.getElementById('plot-image').src = imageSrc;
+                document.getElementById('plot-popup').style.display = 'block';
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('plot-popup').style.display = 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="column left-column">
+        <select id="url-select">
+            <option value="Python-Manual">Python-Manual</option>
+            <option value="Numpy-Quick-Start">Numpy-Quick-Start</option>
+            <option value="Moore's Law">Moore's Law</option>
+        </select>
+        <button id="load-button">Load</button>
+        <iframe id="web-viewer"></iframe>
+    </div>
+    <div class="column right-column">
+        <div class="editor-area">
+            <textarea id="editor" placeholder="Write your Python code here"></textarea>
+            <div class="buttons">
+                <button class="button" onclick="runCode()">Run Code</button>
+                <button class="button" onclick="clearEditor()">Clear Editor</button>
+            </div>
+        </div>
+        <div class="output-area">
+            <h3>Output</h3>
+            <div id="output"></div>
+        </div>
+    </div>
+    <div id="plot-popup">
+        <img id="plot-image" src="" alt="Plot">
+        <button id="close-popup" onclick="closePopup()">Close</button>
+    </div>
+</body>
+</html>
