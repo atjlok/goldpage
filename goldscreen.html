@@ -4,30 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Viewer and Pyodide Editor</title>
-    <script>
-document.addEventListener("contextmenu", e => e.preventDefault(), false);
-
-document.addEventListener("keydown", e => {
-    // Allow Ctrl+C (copy) and Ctrl+V (paste)
-    if (e.ctrlKey && (e.key === 'c' || e.key === 'v')) {
-        return;
-    }
-
-    // Disable Ctrl+U
-    if (e.ctrlKey && e.key === 'u') {
-        e.stopPropagation();
-        e.preventDefault();
-        return;
-    }
-
-    // Disable F12
-    if (e.keyCode == 123) {
-        e.stopPropagation();
-        e.preventDefault();
-        return;
-    }
-});
-</script>
     <style>
         body {
             display: flex;
@@ -268,6 +244,29 @@ show_plot()
         <img id="plot-image" src="" alt="Plot">
         <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
-    
+    <script>
+document.addEventListener("contextmenu", e => e.preventDefault(), false);
+
+document.addEventListener("keydown", e => {
+    // Allow Ctrl+C (copy) and Ctrl+V (paste)
+    if (e.ctrlKey && (e.key === 'c' || e.key === 'v')) {
+        return;
+    }
+
+    // Disable Ctrl+U
+    if (e.ctrlKey && e.key === 'u') {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+    }
+
+    // Disable F12
+    if (e.keyCode == 123) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+    }
+});
+</script>
 </body>
 </html>
