@@ -245,29 +245,6 @@ show_plot()
         <img id="plot-image" src="" alt="Plot">
         <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
-    <script type="text/javascript">
-        // Function to disable right-click
-        function disableRightClick(e) {
-            e.preventDefault();
-        }
-
-        // Function to disable certain keyboard shortcuts
-        function disableShortcuts(e) {
-            if ((e.ctrlKey && (e.key === 'u' || e.key === 'x')) || e.key === 'F12') {
-                e.preventDefault();
-            }
-        }
-       
-        // Apply event listeners to the main document
-        document.addEventListener('contextmenu', disableRightClick);
-        document.addEventListener('keydown', disableShortcuts);
-
-        // Apply event listeners to the iframe once it's loaded
-        window.addEventListener('load', function() {
-            var iframe = document.getElementById('myIframe');
-            iframe.addEventListener('contextmenu', disableRightClick);
-            iframe.contentWindow.document.addEventListener('keydown', disableShortcuts);
-
-        </script>
+    
 </body>
 </html>
