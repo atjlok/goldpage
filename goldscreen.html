@@ -10,8 +10,9 @@
         });
 
         document.addEventListener('keydown', function(e) {
-            // Disable shortcuts (Ctrl+C, Ctrl+V, Ctrl+U, Ctrl+X, F12)
-            if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u' || e.key === 'x')) || e.key === 'F12') {
+            const allowedKeys = ['c', 'v'];
+            // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
+            if (e.ctrlKey && !allowedKeys.includes(e.key.toLowerCase()) || e.key === 'F12') {
                 e.preventDefault();
             }
         });
@@ -258,11 +259,9 @@ show_plot()
     </div>
      <script>
         function disableShortcuts(event) {
-        const prohibitedKeys = ['c','v','u','m','x', 'a', 's', 'F12', 'I'];
-        if (event.ctrlKey && prohibitedKeys.includes(event.key)) {
-            event.preventDefault();
-        }
-        if (event.key === 'F12' || (event.ctrlKey && event.shiftKey && event.key === 'I')) {
+        const allowedKeys = ['c', 'v'];
+        // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
+        if (event.ctrlKey && !allowedKeys.includes(event.key.toLowerCase()) || event.key === 'F12') {
             event.preventDefault();
         }
         return true;
