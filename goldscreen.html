@@ -257,15 +257,17 @@ show_plot()
         <img id="plot-image" src="" alt="Plot">
         <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
-     <script>
+    <script>
         function disableShortcuts(event) {
-        const allowedKeys = ['c', 'v'];
-        // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
-        if (event.ctrlKey && !allowedKeys.includes(event.key.toLowerCase()) || event.key === 'F12') {
-            event.preventDefault();
+            const allowedKeys = ['c', 'v'];
+            // Allow Ctrl+C and Ctrl+V, disable all other shortcuts
+            if (event.ctrlKey && !allowedKeys.includes(event.key.toLowerCase()) || event.key === 'F12') {
+                event.preventDefault();
+            }
+            return true;
         }
-        return true;
-    }
-   </script>
+
+        document.addEventListener('keydown', disableShortcuts);
+    </script>
 </body>
 </html>
