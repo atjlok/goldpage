@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Viewer and Pyodide Editor</title>
-    <script type="text/javascript">
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-
+    <script>
+    // Function to disable unwanted shortcuts
         function disableShortcuts(e) {
             const allowedKeys = ['c', 'v'];
             if (e.ctrlKey && !allowedKeys.includes(e.key.toLowerCase()) || e.key === 'F12') {
@@ -16,23 +13,16 @@
             }
         }
 
-        document.addEventListener('keydown', disableShortcuts);
-
-        function applyIframeShortcuts(iframe) {
-            const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-            iframeDocument.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-            });
-
-            iframeDocument.addEventListener('keydown', disableShortcuts);
+        // Function to disable context menu
+        function disableContextMenu(e) {
+            e.preventDefault();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const iframe = document.getElementById('web-viewer');
-            iframe.onload = function() {
-                applyIframeShortcuts(iframe);
-            };
-        });
+        // Function to apply event listeners to a document (main document or iframe document)
+        function applyEventListeners(element) {
+            element.addEventListener('contextmenu', disableContextMenu);
+            element.addEventListener('keydown', disableShortcuts);
+        }
     </script>
     <style>
         body {
